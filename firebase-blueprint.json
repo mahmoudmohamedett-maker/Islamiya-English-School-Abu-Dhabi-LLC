@@ -1,0 +1,255 @@
+{
+  "entities": {
+    "Application": {
+      "title": "Application",
+      "description": "Student admission application for Islamiya English School Abu Dhabi AY 2027-2028",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique student application ID",
+          "maxLength": 64
+        },
+        "userId": {
+          "type": "string",
+          "description": "Authentication UID of the submitting parent/student user",
+          "maxLength": 128
+        },
+        "applicantName": {
+          "type": "string",
+          "description": "Student full legal name in English",
+          "maxLength": 128
+        },
+        "applicantArabicName": {
+          "type": "string",
+          "description": "Student full legal name in Arabic",
+          "maxLength": 128
+        },
+        "gradeApplying": {
+          "type": "string",
+          "description": "Target grade level",
+          "maxLength": 32
+        },
+        "academicYear": {
+          "type": "string",
+          "description": "Academic year applied for",
+          "maxLength": 32
+        },
+        "gender": {
+          "type": "string",
+          "description": "Student gender",
+          "maxLength": 16
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "description": "Date of birth in YYYY-MM-DD format",
+          "maxLength": 32
+        },
+        "nationality": {
+          "type": "string",
+          "description": "Student nationality",
+          "maxLength": 64
+        },
+        "emiratesId": {
+          "type": "string",
+          "description": "UAE Emirates ID format 784-YYYY-XXXXXXX-X",
+          "maxLength": 32
+        },
+        "parentName": {
+          "type": "string",
+          "description": "Parent or guardian full name",
+          "maxLength": 128
+        },
+        "parentEmail": {
+          "type": "string",
+          "description": "Parent contact email address",
+          "maxLength": 128
+        },
+        "parentPhone": {
+          "type": "string",
+          "description": "Parent mobile contact number",
+          "maxLength": 32
+        },
+        "parentRelation": {
+          "type": "string",
+          "description": "Relationship to student",
+          "maxLength": 32
+        },
+        "status": {
+          "type": "string",
+          "description": "Current lifecycle status of the admission application",
+          "maxLength": 48
+        },
+        "tuitionPaid": {
+          "type": "boolean",
+          "description": "Flag indicating if tuition deposit or full fee has been settled"
+        },
+        "submittedAt": {
+          "type": "string",
+          "description": "ISO timestamp of application submission",
+          "maxLength": 64
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last status or data update",
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "id",
+        "applicantName",
+        "gradeApplying",
+        "academicYear",
+        "parentName",
+        "parentEmail",
+        "status"
+      ]
+    },
+    "LetterRequest": {
+      "title": "LetterRequest",
+      "description": "Official school document, certificate or letter request submitted by student/parent",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for letter request",
+          "maxLength": 64
+        },
+        "applicationId": {
+          "type": "string",
+          "description": "Associated student application ID",
+          "maxLength": 64
+        },
+        "userId": {
+          "type": "string",
+          "description": "Auth UID of the requester",
+          "maxLength": 128
+        },
+        "studentName": {
+          "type": "string",
+          "description": "Student full legal name",
+          "maxLength": 128
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Assigned student ID",
+          "maxLength": 64
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of letter or certificate requested",
+          "maxLength": 64
+        },
+        "status": {
+          "type": "string",
+          "description": "Request processing status",
+          "maxLength": 48
+        },
+        "requestedAt": {
+          "type": "string",
+          "description": "ISO timestamp when request was submitted",
+          "maxLength": 64
+        },
+        "completedAt": {
+          "type": "string",
+          "description": "ISO timestamp when request was fulfilled",
+          "maxLength": 64
+        },
+        "adminNotes": {
+          "type": "string",
+          "description": "Registration department feedback or instructions",
+          "maxLength": 500
+        },
+        "issuedDocumentName": {
+          "type": "string",
+          "description": "Filename or title of issued letter",
+          "maxLength": 128
+        }
+      },
+      "required": ["id", "applicationId", "studentName", "type", "status", "requestedAt"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with role access permissions",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Auth UID",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address",
+          "maxLength": 128
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of user",
+          "maxLength": 128
+        },
+        "role": {
+          "type": "string",
+          "description": "Assigned portal role",
+          "maxLength": 32
+        },
+        "studentId": {
+          "type": "string",
+          "description": "Optional associated student ID for parent/student accounts",
+          "maxLength": 64
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of account creation",
+          "maxLength": 64
+        }
+      },
+      "required": ["id", "email", "role"]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Authorized staff/super admin privilege record",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Staff user UID",
+          "maxLength": 128
+        },
+        "email": {
+          "type": "string",
+          "description": "Staff email address",
+          "maxLength": 128
+        },
+        "role": {
+          "type": "string",
+          "description": "Privileged role",
+          "maxLength": 32
+        }
+      },
+      "required": ["id", "email", "role"]
+    }
+  },
+  "firestore": {
+    "/applications/{applicationId}": {
+      "schema": { "$ref": "#/entities/Application" },
+      "description": "Student admissions applications for AY 2027-2028"
+    },
+    "/letter_requests/{requestId}": {
+      "schema": { "$ref": "#/entities/LetterRequest" },
+      "description": "Certificate and official letter issuance requests"
+    },
+    "/UserProfile/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Primary user profile and role authorization mapping"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User accounts and role metadata"
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Authoritative administrative role mappings"
+    }
+  }
+}

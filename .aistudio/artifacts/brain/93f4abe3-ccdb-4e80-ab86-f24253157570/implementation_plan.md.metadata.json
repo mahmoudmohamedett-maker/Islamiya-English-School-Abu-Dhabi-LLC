@@ -1,0 +1,6 @@
+{
+  "summary": "Plan for implementing the 11 user enhancements: main page login/sign-up gate, removing bank details, making all 6 ADEK documents mandatory, country dropdown for nationality, gating payment portal behind Super-Admin approval, enhanced document preview & feedback for Admissions Staff, removing evaluator name and feedback from parent view, changing Student ID prefix to IES, stripping finance data from Registration views, and removing 'Recommended' from payment plans.",
+  "updatedAt": "2026-10-20T10:11:38.796897075Z",
+  "requestFeedback": true,
+  "userFacing": true
+}

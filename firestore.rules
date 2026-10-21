@@ -1,0 +1,113 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connection health check endpoint
+    match /test/connection {
+      allow get: if true;
+    }
+
+    // Authentication and Role Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Super Admin & Admin verification:
+    // 1. Checks /admins collection for user ID
+    // 2. Checks /UserProfile collection for role == 'admin' or 'SUPER_ADMIN'
+    // 3. Checks /users collection for role == 'admin' or 'SUPER_ADMIN'
+    // 4. Matches official bootstrapped super admin email (case-insensitive)
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (exists(/databases/$(database)/documents/UserProfile/$(request.auth.uid)) &&
+         (get(/databases/$(database)/documents/UserProfile/$(request.auth.uid)).data.role == 'admin' ||
+          get(/databases/$(database)/documents/UserProfile/$(request.auth.uid)).data.role == 'SUPER_ADMIN' ||
+          get(/databases/$(database)/documents/UserProfile/$(request.auth.uid)).data.role == 'ADMIN_STAFF' ||
+          get(/databases/$(database)/documents/UserProfile/$(request.auth.uid)).data.role == 'REGISTRATION')) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'SUPER_ADMIN' ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN_STAFF' ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'REGISTRATION')) ||
+        (request.auth.token.email != null && request.auth.token.email.lower() == "mahmoudmohamedett@gmail.com")
+      );
+    }
+
+    // Authoritative Admin Mapping
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
+      allow list: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Primary UserProfile Collection - Enforces role-based permissions
+    match /UserProfile/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (request.auth.uid == userId &&
+         (!('role' in request.resource.data) || request.resource.data.role == resource.data.role))
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Secondary /users Collection (Maintained in parallel for backward compatibility)
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (request.auth.uid == userId &&
+         (!('role' in request.resource.data) || request.resource.data.role == resource.data.role))
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Student Admission Applications (AY 2027-2028)
+    match /applications/{applicationId} {
+      allow get: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.userId == request.auth.uid
+      );
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && (
+        !('userId' in request.resource.data) ||
+        request.resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.userId == request.auth.uid
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Letter and Certificate Requests
+    match /letter_requests/{requestId} {
+      allow get: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.userId == request.auth.uid
+      );
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && (
+        !('userId' in request.resource.data) ||
+        request.resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        resource.data.userId == request.auth.uid
+      );
+      allow delete: if isAdmin();
+    }
+  }
+}
