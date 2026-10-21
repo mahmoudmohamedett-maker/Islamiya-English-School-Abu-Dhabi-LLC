@@ -46,6 +46,29 @@ export const auth = getAuth(app);
 // Official verified Super Admin email address from project environment
 export const SUPER_ADMIN_EMAIL = 'mahmoudmohamedett@gmail.com';
 
+// Pre-authorized Admission Staff members
+export const DESIGNATED_STAFF_EMAILS = [
+  'timonegypt@gmail.com',
+  'timonegypt@gmail',
+];
+
+export function normalizeEmail(email: string): string {
+  if (!email) return '';
+  let e = email.trim();
+  if (e.toLowerCase().endsWith('@gmail')) {
+    e = e + '.com';
+  }
+  return e;
+}
+
+export function isStaffEmail(email?: string | null): boolean {
+  if (!email) return false;
+  const em = normalizeEmail(email).toLowerCase();
+  return DESIGNATED_STAFF_EMAILS.some(
+    (s) => normalizeEmail(s).toLowerCase() === em || em.startsWith('timonegypt@')
+  );
+}
+
 // Google Auth Provider
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
@@ -56,12 +79,14 @@ export async function signInWithGoogle(): Promise<FirebaseUser> {
 }
 
 export async function signInWithEmail(email: string, pass: string): Promise<FirebaseUser> {
-  const result = await fbSignInWithEmail(auth, email.trim(), pass);
+  const cleanEmail = normalizeEmail(email);
+  const result = await fbSignInWithEmail(auth, cleanEmail, pass.trim());
   return result.user;
 }
 
 export async function signUpWithEmail(email: string, pass: string, name?: string): Promise<FirebaseUser> {
-  const result = await fbCreateUserWithEmail(auth, email.trim(), pass);
+  const cleanEmail = normalizeEmail(email);
+  const result = await fbCreateUserWithEmail(auth, cleanEmail, pass.trim());
   if (name && result.user) {
     try {
       await fbUpdateProfile(result.user, { displayName: name });
@@ -73,7 +98,8 @@ export async function signUpWithEmail(email: string, pass: string, name?: string
 }
 
 export async function sendPasswordReset(email: string): Promise<void> {
-  await fbSendPasswordResetEmail(auth, email.trim());
+  const cleanEmail = normalizeEmail(email);
+  await fbSendPasswordResetEmail(auth, cleanEmail);
 }
 
 export async function logOut(): Promise<void> {
@@ -232,7 +258,21 @@ export async function syncCurrentUserProfile(user: FirebaseUser): Promise<UserPr
     return adminProfile;
   }
 
+  const isStaff = isStaffEmail(user.email);
+
   if (existingProfile) {
+    // If designated as staff but profile is still PARENT, upgrade to ADMIN_STAFF
+    if (isStaff && existingProfile.role !== 'ADMIN_STAFF' && !isAdminRole(existingProfile.role)) {
+      const updatedProfile: UserProfile = {
+        ...existingProfile,
+        role: 'ADMIN_STAFF',
+        displayName: existingProfile.displayName || 'Admissions Staff (Timon)',
+      };
+      await setDoc(doc(db, USER_PROFILE_COLLECTION, user.uid), updatedProfile, { merge: true });
+      await setDoc(doc(db, USERS_COLLECTION, user.uid), updatedProfile, { merge: true });
+      return updatedProfile;
+    }
+
     // If existing role is admin or super admin, make sure admins record is present
     if (isAdminRole(existingProfile.role)) {
       try {
@@ -248,12 +288,12 @@ export async function syncCurrentUserProfile(user: FirebaseUser): Promise<UserPr
     return existingProfile;
   }
 
-  // New user registration defaults strictly to PARENT
+  // New user registration - if designated as Admission Staff, grant ADMIN_STAFF role
   const newProfile: UserProfile = {
     id: user.uid,
     email: user.email || '',
-    displayName: user.displayName || (user.email ? user.email.split('@')[0] : 'Parent User'),
-    role: 'PARENT',
+    displayName: user.displayName || (isStaff ? 'Admissions Staff (Timon)' : user.email ? user.email.split('@')[0] : 'Parent User'),
+    role: isStaff ? 'ADMIN_STAFF' : 'PARENT',
     createdAt: new Date().toISOString(),
   };
 

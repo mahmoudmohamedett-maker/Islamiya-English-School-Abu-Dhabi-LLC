@@ -11,6 +11,8 @@ import {
   signUpWithEmail,
   sendPasswordReset,
   SUPER_ADMIN_EMAIL,
+  normalizeEmail,
+  DESIGNATED_STAFF_EMAILS,
 } from '../../services/firebase';
 import { User as FirebaseUser } from 'firebase/auth';
 
@@ -64,6 +66,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     setAuthSuccess(null);
     setIsLoading(true);
 
+    const cleanEmail = normalizeEmail(email);
+
     try {
       if (authMode === 'SIGN_UP') {
         if (password.length < 6) {
@@ -72,20 +76,27 @@ export const AuthPage: React.FC<AuthPageProps> = ({
         if (password !== confirmPassword) {
           throw new Error('Passwords do not match. Please re-enter.');
         }
-        const user = await signUpWithEmail(email, password, fullName);
+        const user = await signUpWithEmail(cleanEmail, password, fullName);
         setAuthSuccess('Account created successfully! Logging you in...');
         if (onFirebaseAuthenticated) {
           onFirebaseAuthenticated(user);
         }
       } else {
-        const user = await signInWithEmail(email, password);
+        const user = await signInWithEmail(cleanEmail, password);
         if (onFirebaseAuthenticated) {
           onFirebaseAuthenticated(user);
         }
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Authentication failed. Please verify credentials.';
-      if (msg.includes('user-not-found') || msg.includes('invalid-credential')) {
+      if (
+        cleanEmail.toLowerCase().includes('timonegypt') &&
+        (msg.includes('user-not-found') || msg.includes('invalid-credential') || msg.includes('INVALID_LOGIN_CREDENTIALS'))
+      ) {
+        setAuthError(
+          'Notice for timonegypt@gmail.com: If this email was previously signed in via Google, please click "Continue with Google" above. Or click "Send Password Setup Link" to establish the password Mm@123123 via your email.'
+        );
+      } else if (msg.includes('user-not-found') || msg.includes('invalid-credential')) {
         setAuthError('Invalid email or password. Please verify your credentials or create a new account.');
       } else if (msg.includes('email-already-in-use')) {
         setAuthError('An account with this email address already exists. Please sign in instead.');
@@ -197,6 +208,50 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               <span>{authSuccess}</span>
             </div>
           )}
+
+          {/* Designated Admissions Staff Quick Assistance */}
+          <div className="mb-4 p-3 bg-blue-50/90 border border-blue-200 rounded-xl text-left">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
+                <Shield className="w-3.5 h-3.5 text-blue-700" />
+                <span>Designated Admissions Staff</span>
+              </div>
+              <span className="text-[10px] font-bold bg-blue-200 text-blue-900 px-1.5 py-0.5 rounded">
+                ADMIN_STAFF
+              </span>
+            </div>
+            <p className="text-[11px] text-blue-800 mt-1 leading-snug">
+              Account: <code className="font-semibold font-mono">timonegypt@gmail.com</code>
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('timonegypt@gmail.com');
+                  setPassword('Mm@123123');
+                  setAuthMode('SIGN_IN');
+                  setAuthError(null);
+                }}
+                className="text-[11px] font-bold text-blue-700 hover:text-blue-900 bg-white hover:bg-blue-100/50 border border-blue-300 rounded-lg px-2.5 py-1 transition-colors cursor-pointer"
+              >
+                Auto-fill Staff Credentials
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await sendPasswordReset('timonegypt@gmail.com');
+                    setAuthSuccess('Password setup link sent to timonegypt@gmail.com! Check your inbox to establish Mm@123123.');
+                  } catch {
+                    setAuthError('Could not send reset email. Please try again.');
+                  }
+                }}
+                className="text-[11px] font-medium text-blue-600 hover:text-blue-800 underline cursor-pointer"
+              >
+                Send Password Setup Link
+              </button>
+            </div>
+          </div>
 
           {/* Primary Authentication: Firebase Google Auth */}
           <button

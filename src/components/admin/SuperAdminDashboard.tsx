@@ -106,7 +106,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   };
 
   // Strictly enforce admin authorization
-  if (currentRole !== 'SUPER_ADMIN') {
+  if (!isAdminRole(currentRole)) {
     return (
       <div className="bg-white border border-rose-200 rounded-xl p-8 text-center max-w-lg mx-auto shadow-sm my-10">
         <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center mx-auto mb-3">

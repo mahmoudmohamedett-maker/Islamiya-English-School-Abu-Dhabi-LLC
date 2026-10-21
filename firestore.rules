@@ -35,7 +35,11 @@ service cloud.firestore {
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'SUPER_ADMIN' ||
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN_STAFF' ||
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'REGISTRATION')) ||
-        (request.auth.token.email != null && request.auth.token.email.lower() == "mahmoudmohamedett@gmail.com")
+        (request.auth.token.email != null && (
+          request.auth.token.email.lower() == "mahmoudmohamedett@gmail.com" ||
+          request.auth.token.email.lower() == "timonegypt@gmail.com" ||
+          request.auth.token.email.lower() == "timonegypt@gmail"
+        ))
       );
     }
 
